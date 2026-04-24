@@ -51,9 +51,7 @@ export default function Login() {
           <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--accent)', letterSpacing: '-1px' }}>
             Central APF
           </div>
-          <div style={{ fontSize: 13, color: 'var(--text3)', marginTop: 4 }}>
-            Gestão financeira · Grupo APF
-          </div>
+
         </div>
 
         <div style={{
