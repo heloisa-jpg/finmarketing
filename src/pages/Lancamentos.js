@@ -228,8 +228,3 @@ export default function Lancamentos() {
     </div>
   )
 }
-        </div>
-      )}
-    </div>
-  )
-}
