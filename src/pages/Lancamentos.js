@@ -300,6 +300,34 @@ export default function Lancamentos() {
             </div>
           )}
 
+
+          {/* Cards resumo por categoria */}
+          {dados.length > 0 && (() => {
+            const semProjeto = dados.filter(l => !l.projeto_id)
+            const catTotais = {}
+            semProjeto.forEach(l => {
+              const nome = catMap[l.categoria_id]?.nome || 'Outros'
+              const cor = catMap[l.categoria_id]?.cor || '#888'
+              if (!catTotais[nome]) catTotais[nome] = { total: 0, cor, qtd: 0 }
+              catTotais[nome].total += Number(l.valor)
+              catTotais[nome].qtd++
+            })
+            const cats = Object.values(catTotais).sort((a, b) => b.total - a.total)
+            if (cats.length === 0) return null
+            return (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(160px,1fr))', gap: 8, marginBottom: 12 }}>
+                {cats.map(c => (
+                  <div key={c.nome || 'x'} onClick={() => setFiltCat(filtCat === (categorias.find(x => x.nome === (c.nome))?.id || '') ? '' : (categorias.find(x => x.nome === c.nome)?.id || ''))}
+                    style={{ background: filtCat === (categorias.find(x => x.nome === c.nome)?.id || '') ? c.cor + '22' : 'var(--bg2)', border: filtCat === (categorias.find(x => x.nome === c.nome)?.id || '') ? `1px solid ${c.cor}` : '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '.875rem', cursor: 'pointer', transition: 'all .15s' }}>
+                    <div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 4 }}>{c.nome}</div>
+                    <div style={{ fontFamily: 'DM Mono', fontSize: 16, fontWeight: 700, color: c.cor }}>{fmt(c.total)}</div>
+                    <div style={{ fontSize: 10, color: 'var(--text3)', marginTop: 2 }}>{c.qtd} lançamento{c.qtd !== 1 ? 's' : ''}</div>
+                  </div>
+                ))}
+              </div>
+            )
+          })()}
+
           <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
             {lancsSemProjeto.length === 0 ? <div className="empty">Nenhum lançamento encontrado</div> : (
               <table>
