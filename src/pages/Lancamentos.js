@@ -33,6 +33,10 @@ export default function Lancamentos() {
   const [mostrarFormProjeto, setMostrarFormProjeto] = useState(false)
   const [formProjeto, setFormProjeto] = useState({ nome: '', descricao: '', data_inicio: '', data_fim: '', orcamento: '', setor_id: '', cor: '#D4537E' })
   const [salvandoProjeto, setSalvandoProjeto] = useState(false)
+  const [projFiltCat, setProjFiltCat] = useState('')
+  const [projFiltMetodo, setProjFiltMetodo] = useState('')
+  const [projFiltDe, setProjFiltDe] = useState('')
+  const [projFiltAte, setProjFiltAte] = useState('')
 
   useEffect(() => {
     supabase.from('categorias').select('*').then(({ data }) => {
@@ -118,7 +122,7 @@ export default function Lancamentos() {
 
   return (
     <div>
-      {projetoAberto && (
+{projetoAberto && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.85)', zIndex: 100, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '2rem 1rem', overflowY: 'auto' }}>
           <div style={{ background: 'var(--bg2)', border: `1px solid ${projetoAberto.cor}44`, borderTop: `3px solid ${projetoAberto.cor}`, borderRadius: 'var(--radius-lg)', width: '100%', maxWidth: 960, padding: '1.5rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
@@ -134,7 +138,7 @@ export default function Lancamentos() {
                   </div>
                   {projetoAberto.orcamento && <div style={{ fontSize: 11, color: 'var(--text3)' }}>de {fmt(projetoAberto.orcamento)} orçado</div>}
                 </div>
-                <button className="btn-ghost" onClick={() => setProjetoAberto(null)}>✕ Fechar</button>
+                <button className="btn-ghost" onClick={() => { setProjetoAberto(null); setProjFiltCat(''); setProjFiltMetodo(''); setProjFiltDe(''); setProjFiltAte('') }}>✕ Fechar</button>
               </div>
             </div>
 
@@ -152,7 +156,8 @@ export default function Lancamentos() {
               return cats.length > 0 ? (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px,1fr))', gap: 8, marginBottom: '1.25rem' }}>
                   {cats.map(([nome, { total, cor }]) => (
-                    <div key={nome} style={{ background: 'var(--bg3)', borderRadius: 'var(--radius)', padding: '.75rem' }}>
+                    <div key={nome} onClick={() => setProjFiltCat(projFiltCat === nome ? '' : nome)}
+                      style={{ background: projFiltCat === nome ? cor + '22' : 'var(--bg3)', borderRadius: 'var(--radius)', padding: '.75rem', cursor: 'pointer', border: projFiltCat === nome ? `1px solid ${cor}` : '1px solid transparent' }}>
                       <div style={{ fontSize: 11, color: 'var(--text3)' }}>{nome}</div>
                       <div style={{ fontFamily: 'DM Mono', fontWeight: 600, color: cor, fontSize: 15 }}>{fmt(total)}</div>
                       <div style={{ height: 3, background: 'var(--bg2)', borderRadius: 2, marginTop: 6, overflow: 'hidden' }}>
@@ -164,33 +169,62 @@ export default function Lancamentos() {
               ) : null
             })()}
 
+            <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
+              <select value={projFiltCat} onChange={e => setProjFiltCat(e.target.value)} style={{ fontSize: 12, padding: '5px 8px', background: 'var(--bg3)', border: '1px solid var(--border2)', borderRadius: 'var(--radius)', color: 'var(--text2)', width: 'auto' }}>
+                <option value="">Todas categorias</option>
+                {categorias.map(c => <option key={c.id} value={c.nome}>{c.nome}</option>)}
+              </select>
+              <select value={projFiltMetodo} onChange={e => setProjFiltMetodo(e.target.value)} style={{ fontSize: 12, padding: '5px 8px', background: 'var(--bg3)', border: '1px solid var(--border2)', borderRadius: 'var(--radius)', color: 'var(--text2)', width: 'auto' }}>
+                <option value="">Todos métodos</option>
+                {[...new Set(dados.filter(l => l.projeto_id === projetoAberto.id && l.metodo).map(l => l.metodo))].map(m => <option key={m} value={m}>{m}</option>)}
+              </select>
+              <input type="date" value={projFiltDe} onChange={e => setProjFiltDe(e.target.value)} style={{ fontSize: 12, padding: '5px 8px', background: 'var(--bg3)', border: '1px solid var(--border2)', borderRadius: 'var(--radius)', color: 'var(--text2)', width: 'auto' }} />
+              <input type="date" value={projFiltAte} onChange={e => setProjFiltAte(e.target.value)} style={{ fontSize: 12, padding: '5px 8px', background: 'var(--bg3)', border: '1px solid var(--border2)', borderRadius: 'var(--radius)', color: 'var(--text2)', width: 'auto' }} />
+              {(projFiltCat || projFiltMetodo || projFiltDe || projFiltAte) && (
+                <button className="btn-ghost" style={{ fontSize: 11, padding: '4px 10px' }} onClick={() => { setProjFiltCat(''); setProjFiltMetodo(''); setProjFiltDe(''); setProjFiltAte('') }}>✕ Limpar filtros</button>
+              )}
+            </div>
+
             <div style={{ overflow: 'hidden', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}>
-              {dados.filter(l => l.projeto_id === projetoAberto.id).length === 0
-                ? <div className="empty">Nenhum lançamento neste mês para este projeto</div>
-                : (
-                  <table>
-                    <thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Método</th><th>Valor</th><th>NF</th><th>Ações</th></tr></thead>
-                    <tbody>
-                      {dados.filter(l => l.projeto_id === projetoAberto.id).map(l => (
-                        <React.Fragment key={l.id}>
-                          <tr>
-                            <td style={{ fontFamily: 'DM Mono', fontSize: 12, color: 'var(--text3)' }}>{format(new Date(l.data + 'T12:00:00'), 'dd/MM/yy')}</td>
-                            <td><div>{l.descricao}</div>{l.observacoes && <div style={{ fontSize: 11, color: 'var(--text3)' }}>{l.observacoes}</div>}</td>
-                            <td><span className="badge" style={{ background: (catMap[l.categoria_id]?.cor || '#888') + '22', color: catMap[l.categoria_id]?.cor || '#888' }}>{catMap[l.categoria_id]?.nome || '—'}</span></td>
-                            <td style={{ fontSize: 12, color: 'var(--text3)' }}>{l.metodo || '—'}</td>
-                            <td style={{ fontFamily: 'DM Mono', fontWeight: 500 }}>{fmt(l.valor)}</td>
-                            <td><span className={`badge ${l.tem_nf ? 'badge-green' : 'badge-orange'}`}>{l.tem_nf ? '✓' : '✗'}</span></td>
-                            <td><div style={{ display: 'flex', gap: 5 }}>
-                              <button className="btn-ghost" style={{ padding: '3px 8px', fontSize: 11 }} onClick={() => editando === l.id ? setEditando(null) : abrirEdicao(l)}>{editando === l.id ? 'Fechar' : 'Editar'}</button>
-                              <button className="btn-danger" style={{ padding: '3px 8px', fontSize: 11 }} onClick={() => excluir(l.id)}>Excluir</button>
-                            </div></td>
-                          </tr>
-                          <LinhaEdicao l={l} cols={7} />
-                        </React.Fragment>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
+              {(() => {
+                let items = dados.filter(l => l.projeto_id === projetoAberto.id)
+                if (projFiltCat) items = items.filter(l => (catMap[l.categoria_id]?.nome || 'Outros') === projFiltCat)
+                if (projFiltMetodo) items = items.filter(l => l.metodo === projFiltMetodo)
+                if (projFiltDe) items = items.filter(l => l.data >= projFiltDe)
+                if (projFiltAte) items = items.filter(l => l.data <= projFiltAte)
+                return items.length === 0
+                  ? <div className="empty">Nenhum lançamento encontrado</div>
+                  : (
+                    <>
+                      <table>
+                        <thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Método</th><th>Valor</th><th>NF</th><th>Ações</th></tr></thead>
+                        <tbody>
+                          {items.map(l => (
+                            <React.Fragment key={l.id}>
+                              <tr>
+                                <td style={{ fontFamily: 'DM Mono', fontSize: 12, color: 'var(--text3)' }}>{format(new Date(l.data + 'T12:00:00'), 'dd/MM/yy')}</td>
+                                <td><div>{l.descricao}</div>{l.observacoes && <div style={{ fontSize: 11, color: 'var(--text3)' }}>{l.observacoes}</div>}</td>
+                                <td><span className="badge" style={{ background: (catMap[l.categoria_id]?.cor || '#888') + '22', color: catMap[l.categoria_id]?.cor || '#888' }}>{catMap[l.categoria_id]?.nome || '—'}</span></td>
+                                <td style={{ fontSize: 12, color: 'var(--text3)' }}>{l.metodo || '—'}</td>
+                                <td style={{ fontFamily: 'DM Mono', fontWeight: 500 }}>{fmt(l.valor)}</td>
+                                <td><span className={`badge ${l.tem_nf ? 'badge-green' : 'badge-orange'}`}>{l.tem_nf ? '✓' : '✗'}</span></td>
+                                <td><div style={{ display: 'flex', gap: 5 }}>
+                                  <button className="btn-ghost" style={{ padding: '3px 8px', fontSize: 11 }} onClick={() => editando === l.id ? setEditando(null) : abrirEdicao(l)}>{editando === l.id ? 'Fechar' : 'Editar'}</button>
+                                  <button className="btn-danger" style={{ padding: '3px 8px', fontSize: 11 }} onClick={() => excluir(l.id)}>Excluir</button>
+                                </div></td>
+                              </tr>
+                              <LinhaEdicao l={l} cols={7} />
+                            </React.Fragment>
+                          ))}
+                        </tbody>
+                      </table>
+                      <div style={{ padding: '8px 12px', display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--border)' }}>
+                        <span style={{ fontSize: 11, color: 'var(--text3)' }}>{items.length} registros</span>
+                        <span style={{ fontFamily: 'DM Mono', fontSize: 13, fontWeight: 600 }}>{fmt(items.reduce((s, l) => s + Number(l.valor), 0))}</span>
+                      </div>
+                    </>
+                  )
+              })()}
             </div>
           </div>
         </div>
