@@ -58,7 +58,7 @@ export default function Layout({ children, page, setPage }) {
           {!collapsed && (
             <div>
               <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--accent)', letterSpacing: '-.3px' }}>
-                FinMarketing
+                Central APF
               </div>
               <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 1 }}>Grupo APF</div>
             </div>
