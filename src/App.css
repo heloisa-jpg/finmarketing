@@ -271,3 +271,7 @@ tbody tr:hover td { background: rgba(255,255,255,.02); }
   .form-grid { grid-template-columns: 1fr; }
   .form-grid .full { grid-column: 1; }
 }
+
+/* Valores sempre brancos, labels com cor da categoria */
+.metric-card .value { color: var(--text) !important; }
+.saldo-fill { transition: width .4s; }
