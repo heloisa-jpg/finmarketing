@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { supabase } from '../supabase'
 import { useAuth } from '../App'
-import { format } from 'date-fns'
+import { format, endOfMonth } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
 const fmt = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0)
@@ -55,8 +55,10 @@ export default function Lancamentos() {
 
   const load = async () => {
     setLoading(true)
+    const inicio = mes + '-01'
+    const fim = format(endOfMonth(new Date(mes + '-02')), 'yyyy-MM-dd')
     let q = supabase.from('lancamentos').select('*')
-      .gte('data', mes + '-01').lte('data', mes + '-31')
+      .gte('data', inicio).lte('data', fim)
       .order('data', { ascending: false })
     if (filtCat) q = q.eq('categoria_id', filtCat)
     if (filtSetor) q = q.eq('setor_id', filtSetor)
@@ -116,7 +118,6 @@ export default function Lancamentos() {
 
   return (
     <div>
-      {/* Modal projeto */}
       {projetoAberto && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.85)', zIndex: 100, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '2rem 1rem', overflowY: 'auto' }}>
           <div style={{ background: 'var(--bg2)', border: `1px solid ${projetoAberto.cor}44`, borderTop: `3px solid ${projetoAberto.cor}`, borderRadius: 'var(--radius-lg)', width: '100%', maxWidth: 960, padding: '1.5rem' }}>
