@@ -316,15 +316,15 @@ export default function Lancamentos() {
             if (cats.length === 0) return null
             const maxVal = cats[0].total
             return (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(150px,1fr))', gap: 8, marginBottom: 12 }}>
+              <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
                 {cats.map(c => {
                   const catId = categorias.find(x => x.nome === c.nome)?.id || ''
                   const ativo = filtCat === catId
                   return (
                     <div key={c.nome} onClick={() => setFiltCat(ativo ? '' : catId)}
-                      style={{ background: ativo ? c.cor + '18' : 'var(--bg2)', border: ativo ? `1px solid ${c.cor}66` : '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '1rem', cursor: 'pointer', transition: 'all .15s' }}>
+                      style={{ background: ativo ? c.cor + '18' : 'var(--bg2)', border: ativo ? `1px solid ${c.cor}66` : '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '1rem', cursor: 'pointer', transition: 'all .15s', minWidth: 140, flex: '1' }}>
                       <div style={{ fontSize: 11, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 6 }}>{c.nome}</div>
-                      <div style={{ fontFamily: 'DM Mono', fontSize: 18, fontWeight: 700, color: c.cor }}>{fmt(c.total)}</div>
+                      <div style={{ fontFamily: 'DM Mono', fontSize: 18, fontWeight: 700, color: 'var(--text)' }}>{fmt(c.total)}</div>
                       <div style={{ fontSize: 10, color: 'var(--text3)', marginTop: 3 }}>{c.qtd} lançamento{c.qtd !== 1 ? 's' : ''}</div>
                       <div style={{ height: 3, background: 'var(--bg3)', borderRadius: 2, marginTop: 8, overflow: 'hidden' }}>
                         <div style={{ height: 3, background: c.cor, width: `${(c.total / maxVal) * 100}%`, borderRadius: 2 }} />
