@@ -58,10 +58,10 @@ export default function Login() {
             color: 'var(--accent)',
             letterSpacing: '-1px',
           }}>
-            FinMarketing
+            Central APF
           </div>
           <div style={{ fontSize: 13, color: 'var(--text3)', marginTop: 4 }}>
-            Grupo APF — Controle de despesas
+            Gestão financeira · Grupo APF
           </div>
         </div>
 
@@ -150,5 +150,7 @@ export default function Login() {
         </div>
       </div>
     </div>
+  )
+}
   )
 }
