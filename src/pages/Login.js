@@ -46,18 +46,9 @@ export default function Login() {
       justifyContent: 'center',
       padding: '1rem',
     }}>
-      <div style={{
-        width: '100%',
-        maxWidth: 380,
-      }}>
-        {/* Logo */}
+      <div style={{ width: '100%', maxWidth: 380 }}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <div style={{
-            fontSize: 28,
-            fontWeight: 700,
-            color: 'var(--accent)',
-            letterSpacing: '-1px',
-          }}>
+          <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--accent)', letterSpacing: '-1px' }}>
             Central APF
           </div>
           <div style={{ fontSize: 13, color: 'var(--text3)', marginTop: 4 }}>
@@ -65,7 +56,6 @@ export default function Login() {
           </div>
         </div>
 
-        {/* Card */}
         <div style={{
           background: 'var(--bg2)',
           border: '1px solid var(--border)',
@@ -81,34 +71,16 @@ export default function Login() {
               {modo === 'cadastro' && (
                 <div className="form-group">
                   <label>Nome completo</label>
-                  <input
-                    type="text"
-                    placeholder="Seu nome"
-                    value={nome}
-                    onChange={e => setNome(e.target.value)}
-                    required
-                  />
+                  <input type="text" placeholder="Seu nome" value={nome} onChange={e => setNome(e.target.value)} required />
                 </div>
               )}
               <div className="form-group">
                 <label>E-mail</label>
-                <input
-                  type="email"
-                  placeholder="email@grupoapf.com.br"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  required
-                />
+                <input type="email" placeholder="email@grupoapf.com.br" value={email} onChange={e => setEmail(e.target.value)} required />
               </div>
               <div className="form-group">
                 <label>Senha</label>
-                <input
-                  type="password"
-                  placeholder="••••••••"
-                  value={senha}
-                  onChange={e => setSenha(e.target.value)}
-                  required
-                />
+                <input type="password" placeholder="••••••••" value={senha} onChange={e => setSenha(e.target.value)} required />
               </div>
 
               {erro && (
@@ -116,7 +88,7 @@ export default function Login() {
                   fontSize: 12,
                   color: erro.includes('criada') ? 'var(--green)' : 'var(--red)',
                   background: erro.includes('criada') ? 'rgba(62,207,142,.08)' : 'rgba(255,85,85,.08)',
-                  border: `1px solid ${erro.includes('criada') ? 'rgba(62,207,142,.2)' : 'rgba(255,85,85,.2)'}`,
+                  border: '1px solid ' + (erro.includes('criada') ? 'rgba(62,207,142,.2)' : 'rgba(255,85,85,.2)'),
                   borderRadius: 'var(--radius)',
                   padding: '8px 12px',
                 }}>
@@ -124,22 +96,15 @@ export default function Login() {
                 </div>
               )}
 
-              <button
-                type="submit"
-                className="btn-primary"
-                disabled={loading}
-                style={{ marginTop: 4, width: '100%' }}
-              >
+              <button type="submit" className="btn-primary" disabled={loading} style={{ marginTop: 4, width: '100%' }}>
                 {loading ? 'Aguarde...' : modo === 'login' ? 'Entrar' : 'Criar conta'}
               </button>
             </div>
           </form>
 
           <div style={{ textAlign: 'center', marginTop: '1rem' }}>
-            <button
-              onClick={() => { setModo(modo === 'login' ? 'cadastro' : 'login'); setErro('') }}
-              style={{ background: 'transparent', color: 'var(--text3)', fontSize: 12 }}
-            >
+            <button onClick={() => { setModo(modo === 'login' ? 'cadastro' : 'login'); setErro('') }}
+              style={{ background: 'transparent', color: 'var(--text3)', fontSize: 12 }}>
               {modo === 'login' ? 'Não tem conta? Criar agora' : 'Já tenho conta'}
             </button>
           </div>
@@ -150,7 +115,5 @@ export default function Login() {
         </div>
       </div>
     </div>
-  )
-}
   )
 }
