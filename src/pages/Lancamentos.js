@@ -308,22 +308,30 @@ export default function Lancamentos() {
             semProjeto.forEach(l => {
               const nome = catMap[l.categoria_id]?.nome || 'Outros'
               const cor = catMap[l.categoria_id]?.cor || '#888'
-              if (!catTotais[nome]) catTotais[nome] = { total: 0, cor, qtd: 0 }
+              if (!catTotais[nome]) catTotais[nome] = { nome, total: 0, cor, qtd: 0 }
               catTotais[nome].total += Number(l.valor)
               catTotais[nome].qtd++
             })
             const cats = Object.values(catTotais).sort((a, b) => b.total - a.total)
             if (cats.length === 0) return null
+            const maxVal = cats[0].total
             return (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(160px,1fr))', gap: 8, marginBottom: 12 }}>
-                {cats.map(c => (
-                  <div key={c.nome || 'x'} onClick={() => setFiltCat(filtCat === (categorias.find(x => x.nome === (c.nome))?.id || '') ? '' : (categorias.find(x => x.nome === c.nome)?.id || ''))}
-                    style={{ background: filtCat === (categorias.find(x => x.nome === c.nome)?.id || '') ? c.cor + '22' : 'var(--bg2)', border: filtCat === (categorias.find(x => x.nome === c.nome)?.id || '') ? `1px solid ${c.cor}` : '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '.875rem', cursor: 'pointer', transition: 'all .15s' }}>
-                    <div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 4 }}>{c.nome}</div>
-                    <div style={{ fontFamily: 'DM Mono', fontSize: 16, fontWeight: 700, color: c.cor }}>{fmt(c.total)}</div>
-                    <div style={{ fontSize: 10, color: 'var(--text3)', marginTop: 2 }}>{c.qtd} lançamento{c.qtd !== 1 ? 's' : ''}</div>
-                  </div>
-                ))}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(150px,1fr))', gap: 8, marginBottom: 12 }}>
+                {cats.map(c => {
+                  const catId = categorias.find(x => x.nome === c.nome)?.id || ''
+                  const ativo = filtCat === catId
+                  return (
+                    <div key={c.nome} onClick={() => setFiltCat(ativo ? '' : catId)}
+                      style={{ background: ativo ? c.cor + '18' : 'var(--bg2)', border: ativo ? `1px solid ${c.cor}66` : '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '1rem', cursor: 'pointer', transition: 'all .15s' }}>
+                      <div style={{ fontSize: 11, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 6 }}>{c.nome}</div>
+                      <div style={{ fontFamily: 'DM Mono', fontSize: 18, fontWeight: 700, color: c.cor }}>{fmt(c.total)}</div>
+                      <div style={{ fontSize: 10, color: 'var(--text3)', marginTop: 3 }}>{c.qtd} lançamento{c.qtd !== 1 ? 's' : ''}</div>
+                      <div style={{ height: 3, background: 'var(--bg3)', borderRadius: 2, marginTop: 8, overflow: 'hidden' }}>
+                        <div style={{ height: 3, background: c.cor, width: `${(c.total / maxVal) * 100}%`, borderRadius: 2 }} />
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
             )
           })()}
