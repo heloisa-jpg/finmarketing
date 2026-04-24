@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { supabase } from '../supabase'
 import { useAuth } from '../App'
-import { format, startOfMonth, endOfMonth } from 'date-fns'
+import { format, endOfMonth } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
 const fmt = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0)
@@ -19,33 +19,37 @@ export default function Dashboard() {
   const load = async () => {
     setLoading(true)
     const inicio = mes + '-01'
-    const fim = format(endOfMonth(new Date(inicio)), 'yyyy-MM-dd')
+    const fim = format(endOfMonth(new Date(mes + '-02')), 'yyyy-MM-dd')
 
-    const { data: lanc } = await supabase
-      .from('lancamentos')
-      .select('*, categorias(nome, cor), setores(nome)')
-      .gte('data', inicio).lte('data', fim)
-      .order('data', { ascending: false })
+    // Buscar lançamentos e categorias em paralelo
+    const [{ data: lanc }, { data: cats }] = await Promise.all([
+      supabase.from('lancamentos').select('*').gte('data', inicio).lte('data', fim).order('data', { ascending: false }),
+      supabase.from('categorias').select('*')
+    ])
 
-    if (lanc) {
-      const total = lanc.reduce((s, l) => s + Number(l.valor), 0)
-      const sem_nf = lanc.filter(l => !l.tem_nf).length
-      const ferr = lanc.filter(l => l.categorias?.nome === 'Ferramenta').reduce((s, l) => s + Number(l.valor), 0)
-      const transp = lanc.filter(l => l.categorias?.nome === 'Transporte').reduce((s, l) => s + Number(l.valor), 0)
+    if (lanc && cats) {
+      const catMap = {}
+      cats.forEach(c => catMap[c.id] = c)
+
+      const enriched = lanc.map(l => ({ ...l, cat: catMap[l.categoria_id] || { nome: 'Outros', cor: '#888' } }))
+
+      const total = enriched.reduce((s, l) => s + Number(l.valor), 0)
+      const sem_nf = enriched.filter(l => !l.tem_nf).length
+      const ferr = enriched.filter(l => l.cat?.nome === 'Ferramenta').reduce((s, l) => s + Number(l.valor), 0)
+      const transp = enriched.filter(l => l.cat?.nome === 'Transporte').reduce((s, l) => s + Number(l.valor), 0)
       setStats({ total, ferramentas: ferr, transporte: transp, sem_nf })
 
-      // Agrupar por categoria
       const map = {}
-      lanc.forEach(l => {
-        const cat = l.categorias?.nome || 'Outros'
-        const cor = l.categorias?.cor || '#888'
-        if (!map[cat]) map[cat] = { nome: cat, cor, total: 0 }
-        map[cat].total += Number(l.valor)
+      enriched.forEach(l => {
+        const nome = l.cat?.nome || 'Outros'
+        const cor = l.cat?.cor || '#888'
+        if (!map[nome]) map[nome] = { nome, cor, total: 0 }
+        map[nome].total += Number(l.valor)
       })
-      const cats = Object.values(map).sort((a, b) => b.total - a.total)
-      const maxVal = cats[0]?.total || 1
-      setPorCategoria(cats.map(c => ({ ...c, pct: (c.total / maxVal) * 100 })))
-      setRecentes(lanc.slice(0, 8))
+      const catList = Object.values(map).sort((a, b) => b.total - a.total)
+      const maxVal = catList[0]?.total || 1
+      setPorCategoria(catList.map(c => ({ ...c, pct: (c.total / maxVal) * 100 })))
+      setRecentes(enriched.slice(0, 8))
     }
     setLoading(false)
   }
@@ -79,32 +83,27 @@ export default function Dashboard() {
           <div className="metric-grid">
             <div className="metric-card">
               <div className="label">Total gasto</div>
-              <div className="value" >
-                {fmt(stats.total)}
-              </div>
-              <div className="sub">{format(new Date(mes + '-01'), 'MMMM yyyy', { locale: ptBR })}</div>
+              <div className="value">{fmt(stats.total)}</div>
+              <div className="sub">{format(new Date(mes + '-02'), 'MMMM yyyy', { locale: ptBR })}</div>
             </div>
             <div className="metric-card">
               <div className="label">Ferramentas</div>
-              <div className="value" >{fmt(stats.ferramentas)}</div>
+              <div className="value">{fmt(stats.ferramentas)}</div>
               <div className="sub">Assinaturas recorrentes</div>
             </div>
             <div className="metric-card">
               <div className="label">Transporte</div>
-              <div className="value" >{fmt(stats.transporte)}</div>
+              <div className="value">{fmt(stats.transporte)}</div>
               <div className="sub">Uber e fretes</div>
             </div>
             <div className="metric-card">
               <div className="label">Sem NF</div>
-              <div className="value" >
-                {stats.sem_nf}
-              </div>
+              <div className="value">{stats.sem_nf}</div>
               <div className="sub">Lançamentos pendentes</div>
             </div>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
-            {/* Por categoria */}
             <div className="card">
               <div style={{ fontSize: 13, fontWeight: 500, marginBottom: '1rem', color: 'var(--text2)' }}>
                 Por categoria
@@ -128,7 +127,6 @@ export default function Dashboard() {
               )}
             </div>
 
-            {/* Ações rápidas */}
             <div className="card">
               <div style={{ fontSize: 13, fontWeight: 500, marginBottom: '1rem', color: 'var(--text2)' }}>
                 Ações rápidas
@@ -140,20 +138,12 @@ export default function Dashboard() {
                   isAdmin && { label: 'Solicitação de pagamento', sub: 'Freela, PJ ou recorrente', page: 'solicitacoes', color: 'var(--purple)' },
                   isAdmin && { label: 'Ver relatório completo', sub: 'Análise por período', page: 'relatorio', color: 'var(--green)' },
                 ].filter(Boolean).map(a => (
-                  <button
-                    key={a.page}
-                    onClick={() => setPage(a.page)}
-                    style={{
-                      background: 'var(--bg3)',
-                      border: '1px solid var(--border)',
-                      borderRadius: 'var(--radius)',
-                      padding: '10px 12px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      color: 'var(--text)',
-                      textAlign: 'left',
-                    }}
+                  <button key={a.page} onClick={() => setPage(a.page)} style={{
+                    background: 'var(--bg3)', border: '1px solid var(--border)',
+                    borderRadius: 'var(--radius)', padding: '10px 12px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    color: 'var(--text)', textAlign: 'left',
+                  }}
                     onMouseEnter={e => e.currentTarget.style.borderColor = a.color}
                     onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
                   >
@@ -168,7 +158,6 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Recentes */}
           <div className="card">
             <div style={{ fontSize: 13, fontWeight: 500, marginBottom: '1rem', color: 'var(--text2)' }}>
               Últimos lançamentos
@@ -179,12 +168,7 @@ export default function Dashboard() {
               <table>
                 <thead>
                   <tr>
-                    <th>Data</th>
-                    <th>Descrição</th>
-                    <th>Categoria</th>
-                    <th>Setor</th>
-                    <th>Valor</th>
-                    <th>NF</th>
+                    <th>Data</th><th>Descrição</th><th>Categoria</th><th>Valor</th><th>NF</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -194,16 +178,13 @@ export default function Dashboard() {
                         {format(new Date(l.data + 'T12:00:00'), 'dd/MM')}
                       </td>
                       <td style={{ maxWidth: 200 }}>
-                        <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {l.descricao}
-                        </div>
+                        <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{l.descricao}</div>
                       </td>
                       <td>
-                        <span className="badge badge-gray" style={{ background: l.categorias?.cor + '22', color: l.categorias?.cor }}>
-                          {l.categorias?.nome || '—'}
+                        <span className="badge" style={{ background: (l.cat?.cor || '#888') + '22', color: l.cat?.cor || '#888' }}>
+                          {l.cat?.nome || '—'}
                         </span>
                       </td>
-                      <td style={{ color: 'var(--text3)', fontSize: 12 }}>{l.setores?.nome || '—'}</td>
                       <td style={{ fontFamily: 'DM Mono', fontSize: 13, fontWeight: 500 }}>{fmt(l.valor)}</td>
                       <td>
                         <span className={`badge ${l.tem_nf ? 'badge-green' : 'badge-orange'}`}>
@@ -216,10 +197,7 @@ export default function Dashboard() {
               </table>
             )}
             {recentes.length > 0 && (
-              <button
-                onClick={() => setPage('lancamentos')}
-                style={{ background: 'transparent', color: 'var(--text3)', fontSize: 12, marginTop: '.75rem', padding: '4px 0' }}
-              >
+              <button onClick={() => setPage('lancamentos')} style={{ background: 'transparent', color: 'var(--text3)', fontSize: 12, marginTop: '.75rem', padding: '4px 0' }}>
                 Ver todos →
               </button>
             )}
