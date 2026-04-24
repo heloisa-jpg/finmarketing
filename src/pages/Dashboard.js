@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { supabase } from '../supabase'
 import { useAuth } from '../App'
-import { format, endOfMonth } from 'date-fns'
+import { format, startOfMonth, endOfMonth } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
 const fmt = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0)
@@ -13,68 +13,39 @@ export default function Dashboard() {
   const [porCategoria, setPorCategoria] = useState([])
   const [mes, setMes] = useState(format(new Date(), 'yyyy-MM'))
   const [loading, setLoading] = useState(true)
-  const [categorias, setCategorias] = useState({})
-  const [setores, setSetores] = useState({})
 
-  useEffect(() => {
-    loadRefs()
-  }, [])
-
-  useEffect(() => {
-    if (Object.keys(categorias).length > 0) load()
-  }, [mes, categorias])
-
-  const loadRefs = async () => {
-    const { data: cats } = await supabase.from('categorias').select('*')
-    const { data: sets } = await supabase.from('setores').select('*')
-    const catMap = {}
-    const setMap = {}
-    if (cats) cats.forEach(c => catMap[c.id] = c)
-    if (sets) sets.forEach(s => setMap[s.id] = s)
-    setCategorias(catMap)
-    setSetores(setMap)
-  }
+  useEffect(() => { load() }, [mes])
 
   const load = async () => {
     setLoading(true)
     const inicio = mes + '-01'
-    const fim = format(endOfMonth(new Date(inicio + 'T12:00:00')), 'yyyy-MM-dd')
+    const fim = format(endOfMonth(new Date(inicio)), 'yyyy-MM-dd')
 
-    const { data: lanc, error } = await supabase
+    const { data: lanc } = await supabase
       .from('lancamentos')
-      .select('*')
-      .gte('data', inicio)
-      .lte('data', fim)
+      .select('*, categorias(nome, cor), setores(nome)')
+      .gte('data', inicio).lte('data', fim)
       .order('data', { ascending: false })
 
-    if (lanc && lanc.length > 0) {
-      const enriched = lanc.map(l => ({
-        ...l,
-        cat: categorias[l.categoria_id] || { nome: 'Outros', cor: '#888' },
-        set: setores[l.setor_id] || { nome: '—' },
-      }))
-
-      const total = enriched.reduce((s, l) => s + Number(l.valor), 0)
-      const sem_nf = enriched.filter(l => !l.tem_nf).length
-      const ferr = enriched.filter(l => l.cat?.nome === 'Ferramenta').reduce((s, l) => s + Number(l.valor), 0)
-      const transp = enriched.filter(l => l.cat?.nome === 'Transporte').reduce((s, l) => s + Number(l.valor), 0)
+    if (lanc) {
+      const total = lanc.reduce((s, l) => s + Number(l.valor), 0)
+      const sem_nf = lanc.filter(l => !l.tem_nf).length
+      const ferr = lanc.filter(l => l.categorias?.nome === 'Ferramenta').reduce((s, l) => s + Number(l.valor), 0)
+      const transp = lanc.filter(l => l.categorias?.nome === 'Transporte').reduce((s, l) => s + Number(l.valor), 0)
       setStats({ total, ferramentas: ferr, transporte: transp, sem_nf })
 
+      // Agrupar por categoria
       const map = {}
-      enriched.forEach(l => {
-        const nome = l.cat?.nome || 'Outros'
-        const cor = l.cat?.cor || '#888'
-        if (!map[nome]) map[nome] = { nome, cor, total: 0 }
-        map[nome].total += Number(l.valor)
+      lanc.forEach(l => {
+        const cat = l.categorias?.nome || 'Outros'
+        const cor = l.categorias?.cor || '#888'
+        if (!map[cat]) map[cat] = { nome: cat, cor, total: 0 }
+        map[cat].total += Number(l.valor)
       })
       const cats = Object.values(map).sort((a, b) => b.total - a.total)
       const maxVal = cats[0]?.total || 1
       setPorCategoria(cats.map(c => ({ ...c, pct: (c.total / maxVal) * 100 })))
-      setRecentes(enriched.slice(0, 8))
-    } else {
-      setStats({ total: 0, ferramentas: 0, transporte: 0, sem_nf: 0 })
-      setPorCategoria([])
-      setRecentes([])
+      setRecentes(lanc.slice(0, 8))
     }
     setLoading(false)
   }
@@ -108,24 +79,24 @@ export default function Dashboard() {
           <div className="metric-grid">
             <div className="metric-card">
               <div className="label">Total gasto</div>
-              <div className="value" style={{ color: stats.total > 10000 ? 'var(--red)' : 'var(--text)' }}>
+              <div className="value" >
                 {fmt(stats.total)}
               </div>
-              <div className="sub">{format(new Date(mes + '-02'), 'MMMM yyyy', { locale: ptBR })}</div>
+              <div className="sub">{format(new Date(mes + '-01'), 'MMMM yyyy', { locale: ptBR })}</div>
             </div>
             <div className="metric-card">
               <div className="label">Ferramentas</div>
-              <div className="value" style={{ color: 'var(--purple)' }}>{fmt(stats.ferramentas)}</div>
+              <div className="value" >{fmt(stats.ferramentas)}</div>
               <div className="sub">Assinaturas recorrentes</div>
             </div>
             <div className="metric-card">
               <div className="label">Transporte</div>
-              <div className="value" style={{ color: 'var(--blue)' }}>{fmt(stats.transporte)}</div>
+              <div className="value" >{fmt(stats.transporte)}</div>
               <div className="sub">Uber e fretes</div>
             </div>
             <div className="metric-card">
               <div className="label">Sem NF</div>
-              <div className="value" style={{ color: stats.sem_nf > 0 ? 'var(--orange)' : 'var(--green)' }}>
+              <div className="value" >
                 {stats.sem_nf}
               </div>
               <div className="sub">Lançamentos pendentes</div>
@@ -133,6 +104,7 @@ export default function Dashboard() {
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+            {/* Por categoria */}
             <div className="card">
               <div style={{ fontSize: 13, fontWeight: 500, marginBottom: '1rem', color: 'var(--text2)' }}>
                 Por categoria
@@ -156,6 +128,7 @@ export default function Dashboard() {
               )}
             </div>
 
+            {/* Ações rápidas */}
             <div className="card">
               <div style={{ fontSize: 13, fontWeight: 500, marginBottom: '1rem', color: 'var(--text2)' }}>
                 Ações rápidas
@@ -195,6 +168,7 @@ export default function Dashboard() {
             </div>
           </div>
 
+          {/* Recentes */}
           <div className="card">
             <div style={{ fontSize: 13, fontWeight: 500, marginBottom: '1rem', color: 'var(--text2)' }}>
               Últimos lançamentos
@@ -225,11 +199,11 @@ export default function Dashboard() {
                         </div>
                       </td>
                       <td>
-                        <span className="badge badge-gray" style={{ background: (l.cat?.cor || '#888') + '22', color: l.cat?.cor || '#888' }}>
-                          {l.cat?.nome || '—'}
+                        <span className="badge badge-gray" style={{ background: l.categorias?.cor + '22', color: l.categorias?.cor }}>
+                          {l.categorias?.nome || '—'}
                         </span>
                       </td>
-                      <td style={{ color: 'var(--text3)', fontSize: 12 }}>{l.set?.nome || '—'}</td>
+                      <td style={{ color: 'var(--text3)', fontSize: 12 }}>{l.setores?.nome || '—'}</td>
                       <td style={{ fontFamily: 'DM Mono', fontSize: 13, fontWeight: 500 }}>{fmt(l.valor)}</td>
                       <td>
                         <span className={`badge ${l.tem_nf ? 'badge-green' : 'badge-orange'}`}>
