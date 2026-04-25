@@ -258,7 +258,15 @@ function PerfilColaborador({ colaborador: c, onVoltar }) {
 
   const salvarDados = async (e) => {
     e.preventDefault(); setSalvando(true)
-    await supabase.from('colaboradores').update(form).eq('id', c.id)
+    const payload = {}
+    Object.entries(form).forEach(([k, v]) => {
+      if (v !== '' && v !== undefined) payload[k] = v === null ? null : v
+    })
+    payload.hora_entrada = form.hora_entrada || null
+    payload.hora_saida = form.hora_saida || null
+    payload.setor_id = form.setor_id || null
+    payload.turno = form.turno || null
+    await supabase.from('colaboradores').update(payload).eq('id', c.id)
     setSalvando(false); setEditando(false)
   }
 
@@ -826,7 +834,9 @@ function MeuPerfil({ colab, profile, reloadColab }) {
 
   const salvar = async (e) => {
     e.preventDefault(); setSalvando(true)
-    await supabase.from('colaboradores').update(form).eq('id', colab.id)
+    const payload = {}
+    Object.entries(form).forEach(([k, v]) => { if (v !== '' && v !== undefined) payload[k] = v })
+    await supabase.from('colaboradores').update(payload).eq('id', colab.id)
     setSalvando(false); setSucesso(true)
     setTimeout(() => setSucesso(false), 2000)
     reloadColab()
