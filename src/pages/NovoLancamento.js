@@ -4,7 +4,7 @@ import { useAuth } from '../App'
 import { format, addMonths, setDate } from 'date-fns'
 
 export default function NovoLancamento() {
-  const { profile, setPage } = useAuth()
+  const { profile, setPage, isAdmin } = useAuth()
   const [form, setForm] = useState({
     data: format(new Date(), 'yyyy-MM-dd'),
     descricao: '',
@@ -70,6 +70,7 @@ export default function NovoLancamento() {
       usuario_id: profile.id,
     }
 
+    payload.status = isAdmin ? 'aprovado' : 'pendente'
     const { error } = await supabase.from('lancamentos').insert(payload)
 
     // Se for recorrente, salva na tabela de recorrentes também
@@ -159,7 +160,12 @@ export default function NovoLancamento() {
       {/* NOVO LANÇAMENTO */}
       {aba === 'novo' && (
         <>
-          {sucesso && (
+          {!isAdmin && (
+        <div style={{ background: 'rgba(255,199,0,.07)', border: '1px solid rgba(255,199,0,.2)', borderRadius: 'var(--radius)', padding: '.75rem 1rem', marginBottom: 12, fontSize: 12, color: 'var(--accent)' }}>
+          Seu lançamento será enviado para aprovação do ADM antes de ser contabilizado.
+        </div>
+      )}
+      {sucesso && (
             <div style={{
               background: 'rgba(62,207,142,.1)', border: '1px solid rgba(62,207,142,.3)',
               borderRadius: 'var(--radius)', padding: '.875rem 1rem',
