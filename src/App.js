@@ -8,7 +8,6 @@ import Reembolsos from './pages/Reembolsos'
 import Adiantamentos from './pages/Adiantamentos'
 import Cartoes from './pages/Cartoes'
 import Solicitacoes from './pages/Solicitacoes'
-import Pessoas from './pages/Pessoas'
 import Relatorio from './pages/Relatorio'
 import Usuarios from './pages/Usuarios'
 import RH from './pages/RH'
@@ -23,6 +22,7 @@ export default function App() {
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState('dashboard')
+  const [rhAba, setRhAba] = useState('overview')
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -62,15 +62,14 @@ export default function App() {
     adiantamentos: isAdmin ? <Adiantamentos /> : <Dashboard />,
     cartoes: isAdmin ? <Cartoes /> : <Dashboard />,
     solicitacoes: isAdmin ? <Solicitacoes /> : <Dashboard />,
-    pessoas: isAdmin ? <Pessoas /> : <Dashboard />,
     relatorio: isAdmin ? <Relatorio /> : <Dashboard />,
     usuarios: isAdmin ? <Usuarios /> : <Dashboard />,
-    rh: isAdmin ? <RH /> : <Dashboard />,
+    rh: isAdmin ? <RH abaInicial={rhAba} /> : <Dashboard />,
   }
 
   return (
     <AuthContext.Provider value={{ session, profile, isAdmin, setPage }}>
-      <Layout page={page} setPage={setPage}>
+      <Layout page={page} setPage={setPage} rhAba={rhAba} setRhAba={setRhAba}>
         {pages[page] || <Dashboard />}
       </Layout>
     </AuthContext.Provider>
