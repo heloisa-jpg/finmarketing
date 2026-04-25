@@ -40,13 +40,7 @@ export default function RH({ abaInicial = 'overview' }) {
       <div className="topbar">
         <h1 className="page-title" style={{ margin: 0 }}>Recursos Humanos</h1>
       </div>
-      <div style={{ display: 'flex', gap: 4, marginBottom: '1.25rem', flexWrap: 'wrap', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>
-        {ABAS.map(a => (
-          <button key={a} onClick={() => setAba(a)} style={{ padding: '6px 14px', fontSize: 13, borderRadius: 'var(--radius)', background: aba === a ? 'var(--accent)' : 'transparent', color: aba === a ? '#0f0f0f' : 'var(--text2)', border: 'none', cursor: 'pointer', fontWeight: aba === a ? 600 : 400 }}>
-            {ABA_LABELS[a]}
-          </button>
-        ))}
-      </div>
+
 
       {aba === 'overview' && <Overview colaboradores={colaboradores} aniversariantes={aniversariantes} loading={loading} />}
       {aba === 'colaboradores' && <Colaboradores colaboradores={colaboradores} setores={setores} reload={load} />}
