@@ -65,6 +65,11 @@ export default function Lancamentos() {
       .gte('data', inicio).lte('data', fim)
       .order('data', { ascending: false })
     if (!isAdmin && profile?.id) q = q.eq('usuario_id', profile.id)
+    if (isAdmin) {
+      // ADM vê todos incluindo pendentes
+    } else {
+      q = q.in('status', ['aprovado', 'pendente', 'recusado'])
+    }
     if (filtCat) q = q.eq('categoria_id', filtCat)
     if (filtSetor) q = q.eq('setor_id', filtSetor)
     if (filtNF === 'sim') q = q.eq('tem_nf', true)
@@ -83,6 +88,11 @@ export default function Lancamentos() {
     setSalvando(true)
     await supabase.from('lancamentos').update({ ...editForm, valor: parseFloat(editForm.valor.replace(',', '.')) }).eq('id', id)
     setSalvando(false); setEditando(null); load()
+  }
+
+  const aprovarLancamento = async (id, status) => {
+    await supabase.from('lancamentos').update({ status }).eq('id', id)
+    load()
   }
 
   const excluir = async (id) => {
@@ -231,6 +241,13 @@ export default function Lancamentos() {
         </div>
       )}
 
+      {isAdmin && dados.filter(l => l.status === 'pendente').length > 0 && (
+        <div style={{ background: 'rgba(255,199,0,.08)', border: '1px solid rgba(255,199,0,.2)', borderRadius: 'var(--radius)', padding: '.75rem 1rem', marginBottom: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontSize: 13, color: 'var(--accent)', fontWeight: 500 }}>
+            ⚠ {dados.filter(l => l.status === 'pendente').length} lançamento(s) aguardando aprovação
+          </span>
+        </div>
+      )}
       <div className="topbar">
         <h1 className="page-title" style={{ margin: 0 }}>Despesas</h1>
         <div style={{ display: 'flex', gap: 8 }}>
@@ -340,7 +357,7 @@ export default function Lancamentos() {
           <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
             {lancsSemProjeto.length === 0 ? <div className="empty">Nenhum lançamento encontrado</div> : (
               <table>
-                <thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Setor</th><th>Método</th><th>Valor</th><th>NF</th><th>Ações</th></tr></thead>
+                <thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Setor</th><th>Método</th><th>Valor</th><th>NF</th><th>Status</th><th>Ações</th></tr></thead>
                 <tbody>
                   {lancsSemProjeto.map(l => (
                     <React.Fragment key={l.id}>
