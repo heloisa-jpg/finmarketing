@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useAuth } from '../App'
 import { supabase } from '../supabase'
 
-const MODULOS = [
+const MODULOS_ADMIN = [
   {
     key: 'financeiro',
     label: 'Financeiro',
@@ -12,17 +12,16 @@ const MODULOS = [
       { key: 'lancamentos', label: 'Despesas', icon: '≡' },
       { key: 'novo_lancamento', label: 'Lançar gasto', icon: '+' },
       { key: 'reembolsos', label: 'Reembolsos', icon: '↩' },
-      { key: 'solicitacoes', label: 'Pagamentos', icon: '◎', adminOnly: true },
-      { key: 'adiantamentos', label: 'Adiantamentos', icon: '◈', adminOnly: true },
-      { key: 'cartoes', label: 'Cartões', icon: '▣', adminOnly: true },
-      { key: 'relatorio', label: 'Relatórios', icon: '▦', adminOnly: true },
+      { key: 'solicitacoes', label: 'Pagamentos', icon: '◎' },
+      { key: 'adiantamentos', label: 'Adiantamentos', icon: '◈' },
+      { key: 'cartoes', label: 'Cartões', icon: '▣' },
+      { key: 'relatorio', label: 'Relatórios', icon: '▦' },
     ]
   },
   {
     key: 'rh',
     label: 'Recursos Humanos',
     icon: '⊙',
-    adminOnly: true,
     items: [
       { key: 'rh', label: 'Visão geral', icon: '◼', rhAba: 'overview' },
       { key: 'rh', label: 'Colaboradores', icon: '⊙', rhAba: 'colaboradores' },
@@ -38,9 +37,33 @@ const MODULOS = [
     key: 'config',
     label: 'Configurações',
     icon: '⊕',
-    adminOnly: true,
     items: [
       { key: 'usuarios', label: 'Usuários', icon: '⊕' },
+    ]
+  },
+]
+
+const MODULOS_COLABORADOR = [
+  {
+    key: 'financeiro',
+    label: 'Financeiro',
+    icon: '◎',
+    items: [
+      { key: 'dashboard', label: 'Meu painel', icon: '◼' },
+      { key: 'novo_lancamento', label: 'Lançar gasto', icon: '+' },
+      { key: 'reembolsos', label: 'Reembolsos', icon: '↩' },
+    ]
+  },
+  {
+    key: 'rh',
+    label: 'Meu RH',
+    icon: '⊙',
+    items: [
+      { key: 'rh', label: 'Meu perfil', icon: '⊙', rhAba: 'meu_perfil' },
+      { key: 'rh', label: 'Bater ponto', icon: '◷', rhAba: 'ponto' },
+      { key: 'rh', label: 'Férias e ausências', icon: '◈', rhAba: 'ferias' },
+      { key: 'rh', label: 'Meu desempenho', icon: '▦', rhAba: 'desempenho' },
+      { key: 'rh', label: 'Onboarding', icon: '→', rhAba: 'onboarding' },
     ]
   },
 ]
@@ -50,13 +73,11 @@ export default function Layout({ children, page, setPage, rhAba, setRhAba }) {
   const [collapsed, setCollapsed] = useState(false)
   const [openModulos, setOpenModulos] = useState({ financeiro: true, rh: false, config: false })
 
+  const MODULOS = isAdmin ? MODULOS_ADMIN : MODULOS_COLABORADOR
+
   const logout = async () => { await supabase.auth.signOut() }
   const toggleModulo = (key) => setOpenModulos(prev => ({ ...prev, [key]: !prev[key] }))
-
-  const isActive = (n) => {
-    if (n.rhAba) return page === 'rh' && rhAba === n.rhAba
-    return page === n.key
-  }
+  const isActive = (n) => n.rhAba ? page === 'rh' && rhAba === n.rhAba : page === n.key
 
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
@@ -67,7 +88,6 @@ export default function Layout({ children, page, setPage, rhAba, setRhAba }) {
         display: 'flex', flexDirection: 'column',
         transition: 'width .2s', flexShrink: 0, overflow: 'hidden',
       }}>
-        {/* Logo */}
         <div style={{
           padding: collapsed ? '1.25rem .875rem' : '1.25rem 1.25rem',
           borderBottom: '1px solid var(--border)',
@@ -85,13 +105,10 @@ export default function Layout({ children, page, setPage, rhAba, setRhAba }) {
           </button>
         </div>
 
-        {/* Nav */}
         <nav style={{ flex: 1, overflowY: 'auto', padding: '0.5rem 0' }}>
           {MODULOS.map(mod => {
-            if (mod.adminOnly && !isAdmin) return null
             const isOpen = openModulos[mod.key]
             const moduloAtivo = mod.items.some(i => isActive(i))
-
             return (
               <div key={mod.key}>
                 <button
@@ -111,12 +128,10 @@ export default function Layout({ children, page, setPage, rhAba, setRhAba }) {
                     <span style={{ fontSize: 14, width: 18, textAlign: 'center', flexShrink: 0 }}>{mod.icon}</span>
                     {!collapsed && <span>{mod.label}</span>}
                   </div>
-                  {!collapsed && (
-                    <span style={{ fontSize: 9, color: 'var(--text3)', display: 'inline-block', transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform .2s' }}>▶</span>
-                  )}
+                  {!collapsed && <span style={{ fontSize: 9, color: 'var(--text3)', display: 'inline-block', transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform .2s' }}>▶</span>}
                 </button>
 
-                {(isOpen || collapsed) && mod.items.filter(i => !i.adminOnly || isAdmin).map((n, idx) => {
+                {(isOpen || collapsed) && mod.items.map((n, idx) => {
                   const ativo = isActive(n)
                   return (
                     <button
@@ -150,7 +165,6 @@ export default function Layout({ children, page, setPage, rhAba, setRhAba }) {
           })}
         </nav>
 
-        {/* User */}
         <div style={{
           padding: collapsed ? '.75rem .5rem' : '.75rem 1.25rem',
           borderTop: '1px solid var(--border)',
