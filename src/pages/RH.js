@@ -12,8 +12,10 @@ const fmtVal = (v) => v ? new Intl.NumberFormat('pt-BR', { style: 'currency', cu
 const ABAS = ['overview','colaboradores','ponto','ferias','desempenho','onboarding','salarios','beneficios']
 const ABA_LABELS = { overview:'Visão geral', colaboradores:'Colaboradores', ponto:'Ponto', ferias:'Férias', desempenho:'Desempenho', onboarding:'Onboarding', salarios:'Salários', beneficios:'Benefícios' }
 
-export default function RH() {
-  const [aba, setAba] = useState('overview')
+export default function RH({ abaInicial = 'overview' }) {
+  const [aba, setAba] = useState(abaInicial)
+
+  useEffect(() => { setAba(abaInicial) }, [abaInicial])
   const [colaboradores, setColaboradores] = useState([])
   const [setores, setSetores] = useState([])
   const [loading, setLoading] = useState(true)
