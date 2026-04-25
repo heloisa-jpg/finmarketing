@@ -14,7 +14,7 @@ const MESES = Array.from({ length: 6 }, (_, i) => {
 const CORES = ['#D4537E', '#378ADD', '#1D9E75', '#EF9F27', '#534AB7', '#E24B4A']
 
 export default function Lancamentos() {
-  const { isAdmin, setPage } = useAuth()
+  const { isAdmin, setPage, profile } = useAuth()
   const [dados, setDados] = useState([])
   const [projetos, setProjetos] = useState([])
   const [loading, setLoading] = useState(true)
@@ -64,6 +64,7 @@ export default function Lancamentos() {
     let q = supabase.from('lancamentos').select('*')
       .gte('data', inicio).lte('data', fim)
       .order('data', { ascending: false })
+    if (!isAdmin && profile?.id) q = q.eq('usuario_id', profile.id)
     if (filtCat) q = q.eq('categoria_id', filtCat)
     if (filtSetor) q = q.eq('setor_id', filtSetor)
     if (filtNF === 'sim') q = q.eq('tem_nf', true)
