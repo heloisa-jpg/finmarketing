@@ -64,7 +64,7 @@ export default function App() {
     solicitacoes: isAdmin ? <Solicitacoes /> : <Dashboard />,
     relatorio: isAdmin ? <Relatorio /> : <Dashboard />,
     usuarios: isAdmin ? <Usuarios /> : <Dashboard />,
-    rh: isAdmin ? <RH abaInicial={rhAba} /> : <Dashboard />,
+    rh: <RH abaInicial={rhAba} />,
   }
 
   return (
