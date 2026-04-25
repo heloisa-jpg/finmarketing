@@ -42,6 +42,7 @@ export default function RH({ abaInicial = 'overview' }) {
       </div>
 
 
+      {aba === 'meu_perfil' && <MeuPerfil />}
       {aba === 'overview' && <Overview colaboradores={colaboradores} aniversariantes={aniversariantes} loading={loading} />}
       {aba === 'colaboradores' && <Colaboradores colaboradores={colaboradores} setores={setores} reload={load} />}
       {aba === 'ponto' && <Ponto colaboradores={colaboradores.filter(c => c.tipo === 'clt' && c.status === 'ativo')} />}
@@ -58,6 +59,67 @@ function Avatar({ nome, size = 28 }) {
   return (
     <div style={{ width: size, height: size, borderRadius: '50%', background: 'var(--accent)', color: '#0f0f0f', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: size * 0.4, fontWeight: 700, flexShrink: 0 }}>
       {nome?.charAt(0) || '?'}
+    </div>
+  )
+}
+
+
+function MeuPerfil() {
+  const { profile } = useAuth()
+  const [colab, setColab] = useState(null)
+  const [form, setForm] = useState({})
+  const [salvando, setSalvando] = useState(false)
+  const [sucesso, setSucesso] = useState(false)
+
+  useEffect(() => { load() }, [])
+
+  const load = async () => {
+    const { data } = await supabase.from('colaboradores').select('*, setores(nome)').eq('usuario_id', profile.id).single()
+    if (data) { setColab(data); setForm({ telefone: data.telefone||'', endereco: data.endereco||'', chave_pix: data.chave_pix||'' }) }
+  }
+
+  const salvar = async (e) => {
+    e.preventDefault(); setSalvando(true)
+    await supabase.from('colaboradores').update(form).eq('usuario_id', profile.id)
+    setSalvando(false); setSucesso(true); setTimeout(() => setSucesso(false), 2000); load()
+  }
+
+  if (!colab) return <div className="empty"><div className="spinner" style={{ margin: '2rem auto' }} /></div>
+
+  return (
+    <div>
+      <h2 style={{ fontSize: 15, fontWeight: 500, marginBottom: '1.25rem' }}>Meu perfil</h2>
+      <div className="card" style={{ marginBottom: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: '1.25rem' }}>
+          <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'var(--accent)', color: '#0f0f0f', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, fontWeight: 700 }}>{colab.nome?.charAt(0)}</div>
+          <div>
+            <div style={{ fontSize: 18, fontWeight: 600 }}>{colab.nome}</div>
+            <div style={{ fontSize: 12, color: 'var(--text3)' }}>{colab.cargo || '—'} · {colab.setores?.nome || '—'}</div>
+            <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+              <span className={`badge ${TIPO_CLS[colab.tipo]}`}>{colab.tipo?.toUpperCase()}</span>
+              <span className={`badge ${STATUS_CLS[colab.status]}`}>{STATUS_LABEL[colab.status]}</span>
+            </div>
+          </div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, fontSize: 13 }}>
+          <div><div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 2 }}>Admissão</div><div style={{ fontFamily: 'DM Mono' }}>{colab.data_admissao ? format(parseISO(colab.data_admissao), 'dd/MM/yyyy') : '—'}</div></div>
+          <div><div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 2 }}>Aniversário</div><div style={{ fontFamily: 'DM Mono' }}>{colab.aniversario ? format(parseISO(colab.aniversario), 'dd/MM') : '—'}</div></div>
+          <div><div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 2 }}>CPF</div><div style={{ fontFamily: 'DM Mono' }}>{colab.cpf || '—'}</div></div>
+          <div><div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 2 }}>E-mail</div><div>{colab.email || '—'}</div></div>
+        </div>
+      </div>
+      <div className="card">
+        <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text2)', marginBottom: '1rem' }}>Dados que você pode atualizar</div>
+        {sucesso && <div style={{ background: 'rgba(62,207,142,.1)', border: '1px solid rgba(62,207,142,.3)', borderRadius: 'var(--radius)', padding: '8px 12px', color: 'var(--green)', fontSize: 13, marginBottom: 12 }}>✓ Salvo!</div>}
+        <form onSubmit={salvar}>
+          <div className="form-grid">
+            <div className="form-group"><label>Telefone</label><input type="text" value={form.telefone||''} onChange={e => setForm(f=>({...f,telefone:e.target.value}))} /></div>
+            <div className="form-group"><label>Chave PIX</label><input type="text" value={form.chave_pix||''} onChange={e => setForm(f=>({...f,chave_pix:e.target.value}))} /></div>
+            <div className="form-group full"><label>Endereço</label><input type="text" value={form.endereco||''} onChange={e => setForm(f=>({...f,endereco:e.target.value}))} /></div>
+          </div>
+          <button type="submit" className="btn-primary" style={{ marginTop: 12 }} disabled={salvando}>{salvando ? 'Salvando...' : 'Salvar'}</button>
+        </form>
+      </div>
     </div>
   )
 }
