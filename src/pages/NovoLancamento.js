@@ -152,9 +152,11 @@ export default function NovoLancamento() {
       {/* Abas */}
       <div className="tag-mes" style={{ marginBottom: '1rem' }}>
         <button className={aba === 'novo' ? 'active' : ''} onClick={() => setAba('novo')}>Novo lançamento</button>
-        <button className={aba === 'recorrentes' ? 'active' : ''} onClick={() => setAba('recorrentes')}>
-          Recorrentes ({listaRec.length})
-        </button>
+        {isAdmin && (
+          <button className={aba === 'recorrentes' ? 'active' : ''} onClick={() => setAba('recorrentes')}>
+            Recorrentes ({listaRec.length})
+          </button>
+        )}
       </div>
 
       {/* NOVO LANÇAMENTO */}
