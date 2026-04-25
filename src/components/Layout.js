@@ -62,8 +62,7 @@ const MODULOS_COLABORADOR = [
       { key: 'rh', label: 'Meu perfil', icon: '⊙', rhAba: 'meu_perfil' },
       { key: 'rh', label: 'Bater ponto', icon: '◷', rhAba: 'ponto' },
       { key: 'rh', label: 'Férias e ausências', icon: '◈', rhAba: 'ferias' },
-      { key: 'rh', label: 'Meu desempenho', icon: '▦', rhAba: 'desempenho' },
-      { key: 'rh', label: 'Onboarding', icon: '→', rhAba: 'onboarding' },
+      { key: 'rh', label: 'Desenvolvimento', icon: '▦', rhAba: 'desenvolvimento' },
     ]
   },
 ]
