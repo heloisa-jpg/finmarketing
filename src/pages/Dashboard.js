@@ -7,7 +7,7 @@ import { ptBR } from 'date-fns/locale'
 const fmt = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0)
 
 export default function Dashboard() {
-  const { isAdmin, setPage } = useAuth()
+  const { isAdmin, setPage, profile } = useAuth()
   const [stats, setStats] = useState({ total: 0, ferramentas: 0, transporte: 0, sem_nf: 0 })
   const [recentes, setRecentes] = useState([])
   const [porCategoria, setPorCategoria] = useState([])
@@ -22,8 +22,11 @@ export default function Dashboard() {
     const fim = format(endOfMonth(new Date(mes + '-02')), 'yyyy-MM-dd')
 
     // Buscar lançamentos e categorias em paralelo
+    let lancQuery = supabase.from('lancamentos').select('*').gte('data', inicio).lte('data', fim).order('data', { ascending: false })
+    if (!isAdmin && profile?.id) lancQuery = lancQuery.eq('usuario_id', profile.id)
+
     const [{ data: lanc }, { data: cats }] = await Promise.all([
-      supabase.from('lancamentos').select('*').gte('data', inicio).lte('data', fim).order('data', { ascending: false }),
+      lancQuery,
       supabase.from('categorias').select('*')
     ])
 
