@@ -11,6 +11,7 @@ import Solicitacoes from './pages/Solicitacoes'
 import Pessoas from './pages/Pessoas'
 import Relatorio from './pages/Relatorio'
 import Usuarios from './pages/Usuarios'
+import RH from './pages/RH'
 import Layout from './components/Layout'
 import './App.css'
 
@@ -64,6 +65,7 @@ export default function App() {
     pessoas: isAdmin ? <Pessoas /> : <Dashboard />,
     relatorio: isAdmin ? <Relatorio /> : <Dashboard />,
     usuarios: isAdmin ? <Usuarios /> : <Dashboard />,
+    rh: isAdmin ? <RH /> : <Dashboard />,
   }
 
   return (
