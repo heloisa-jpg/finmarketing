@@ -81,12 +81,17 @@ function VisaoGeral({ onAbrirColab }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault(); setSalvando(true)
-    await supabase.from('colaboradores').insert({
-      ...form,
-      carga_horaria_dia: parseFloat(form.carga_horaria_dia) || 6,
-      setor_id: form.setor_id || null,
-      turno: form.turno || null,
+    const payload = {}
+    Object.entries(form).forEach(([k, v]) => {
+      if (v !== '' && v !== null && v !== undefined) payload[k] = v
     })
+    payload.carga_horaria_dia = parseFloat(form.carga_horaria_dia) || 6
+    payload.setor_id = form.setor_id || null
+    payload.turno = form.turno || null
+    payload.hora_entrada = form.hora_entrada || null
+    payload.hora_saida = form.hora_saida || null
+
+    await supabase.from('colaboradores').insert(payload)
     setSalvando(false); setMostrarForm(false)
     setForm({ nome: '', tipo: 'clt', status: 'ativo', cargo: '', setor_id: '', data_admissao: '', aniversario: '', cpf: '', rg: '', cnpj: '', email: '', telefone: '', chave_pix: '', endereco: '', turno: '', hora_entrada: '', hora_saida: '', carga_horaria_dia: '6' })
     load()
