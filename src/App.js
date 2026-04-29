@@ -11,6 +11,7 @@ import Solicitacoes from './pages/Solicitacoes'
 import Relatorio from './pages/Relatorio'
 import Usuarios from './pages/Usuarios'
 import RH from './pages/RH'
+import Escala from './pages/Escala'
 import Layout from './components/Layout'
 import './App.css'
 
@@ -45,6 +46,7 @@ export default function App() {
   }
 
   const isAdmin = profile && ['ceo', 'adm', 'financeiro'].includes(profile.perfil)
+  const isLider = profile?.perfil === 'lider'
 
   if (loading) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#0f0f0f' }}>
@@ -53,6 +55,20 @@ export default function App() {
   )
 
   if (!session) return <Login />
+
+  // Líder vai direto pra escala
+  if (isLider && page === 'dashboard') {
+    const pages = {
+      escala: <Escala />,
+    }
+    return (
+      <AuthContext.Provider value={{ session, profile, isAdmin: false, setPage }}>
+        <Layout page={page} setPage={setPage} rhAba={rhAba} setRhAba={setRhAba}>
+          {pages[page] || <Escala />}
+        </Layout>
+      </AuthContext.Provider>
+    )
+  }
 
   const pages = {
     dashboard: <Dashboard />,
@@ -65,6 +81,7 @@ export default function App() {
     relatorio: isAdmin ? <Relatorio /> : <Dashboard />,
     usuarios: isAdmin ? <Usuarios /> : <Dashboard />,
     rh: <RH abaInicial={rhAba} />,
+    escala: <Escala />,
   }
 
   return (
