@@ -31,6 +31,7 @@ const MODULOS_ADMIN = [
       { key: 'rh', label: 'Onboarding', icon: '→', rhAba: 'onboarding' },
       { key: 'rh', label: 'Salários', icon: '◎', rhAba: 'salarios' },
       { key: 'rh', label: 'Benefícios', icon: '◉', rhAba: 'beneficios' },
+      { key: 'escala', label: 'Escalas', icon: '◷' },
     ]
   },
   {
@@ -63,6 +64,7 @@ const MODULOS_COLABORADOR = [
       { key: 'rh', label: 'Bater ponto', icon: '◷', rhAba: 'ponto' },
       { key: 'rh', label: 'Férias e ausências', icon: '◈', rhAba: 'ferias' },
       { key: 'rh', label: 'Desenvolvimento', icon: '▦', rhAba: 'desenvolvimento' },
+      { key: 'escala', label: 'Escala e ponto', icon: '◷' },
     ]
   },
 ]
@@ -72,7 +74,18 @@ export default function Layout({ children, page, setPage, rhAba, setRhAba }) {
   const [collapsed, setCollapsed] = useState(false)
   const [openModulos, setOpenModulos] = useState({ financeiro: true, rh: false, config: false })
 
-  const MODULOS = isAdmin ? MODULOS_ADMIN : MODULOS_COLABORADOR
+  const isLider = profile?.perfil === 'lider'
+  const MODULOS_LIDER = [
+    {
+      key: 'rh',
+      label: 'Atendimento',
+      icon: '◷',
+      items: [
+        { key: 'escala', label: 'Escalas e Ponto', icon: '◷' },
+      ]
+    },
+  ]
+  const MODULOS = isAdmin ? MODULOS_ADMIN : isLider ? MODULOS_LIDER : MODULOS_COLABORADOR
 
   const logout = async () => { await supabase.auth.signOut() }
   const toggleModulo = (key) => setOpenModulos(prev => ({ ...prev, [key]: !prev[key] }))
